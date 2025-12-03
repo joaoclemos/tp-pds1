@@ -11,20 +11,29 @@ typedef struct {
     ALLEGRO_DISPLAY* display;
     ALLEGRO_FONT* font;
     
-    // --- IMAGENS DE PERSONAGENS E CENÁRIO ---
+    // --- IMAGENS GERAIS ---
     ALLEGRO_BITMAP* img_player;
     ALLEGRO_BITMAP* img_enemy_weak;   
     ALLEGRO_BITMAP* img_enemy_strong; 
     ALLEGRO_BITMAP* img_background; 
-    ALLEGRO_BITMAP* img_base; // Base de pedra
+    ALLEGRO_BITMAP* img_base; 
 
-    // --- IMAGENS DE CARTAS ---
-    ALLEGRO_BITMAP* img_verso;     // Verso da carta (para os montes)
-    ALLEGRO_BITMAP* img_ataque;    // Frente Ataque
-    ALLEGRO_BITMAP* img_defesa;    // Frente Defesa
-    ALLEGRO_BITMAP* img_especial;  // Frente Especial
-    ALLEGRO_BITMAP* img_buff;      // Frente Buffs
-    ALLEGRO_BITMAP* img_debuff;    // Frente Debuffs
+    // --- IMAGENS DE FUNDO DE CARTAS / GENÉRICAS ---
+    ALLEGRO_BITMAP* img_verso;     
+    ALLEGRO_BITMAP* img_ataque;    
+    ALLEGRO_BITMAP* img_defesa;    
+    ALLEGRO_BITMAP* img_buff_gen;   
+    ALLEGRO_BITMAP* img_debuff_gen; 
+
+    // --- ÍCONES ESPECÍFICOS (TODOS) ---
+    ALLEGRO_BITMAP* icon_forca;
+    ALLEGRO_BITMAP* icon_vulneravel;
+    ALLEGRO_BITMAP* icon_veneno;
+    ALLEGRO_BITMAP* icon_cura;
+    ALLEGRO_BITMAP* icon_supercura;
+    ALLEGRO_BITMAP* icon_troca; 
+    ALLEGRO_BITMAP* icon_sono;
+    ALLEGRO_BITMAP* icon_fraqueza; // <--- NOVO ÍCONE
 
 } Renderer;
 

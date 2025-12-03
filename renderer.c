@@ -2,7 +2,7 @@
  * renderer.c
  *
  * Responsável por desenhar tudo na tela.
- * MODIFICADO: Custo de energia agora aparece escrito "Custo: N" no topo esquerdo.
+ * MODIFICADO: Nomes das cartas ajustados (CURA TOTAL, VULNERAVEL).
  */
 
 #include "renderer.h"
@@ -106,7 +106,7 @@ void draw_creature(Renderer* renderer, Creature creature, float x, float y, cons
 // --- DESENHA A CARTA ---
 void draw_card(Renderer* r, Card c, float x, float y) {
     ALLEGRO_BITMAP* img_icone = NULL;
-    ALLEGRO_COLOR cor_texto = al_map_rgb(0,0,0); // Texto Preto
+    ALLEGRO_COLOR cor_texto = al_map_rgb(0,0,0);
     char titulo[20];
     char descricao[30];
 
@@ -129,21 +129,42 @@ void draw_card(Renderer* r, Card c, float x, float y) {
             break;
         case BUFF:
             img_icone = r->img_buff;
-            if (c.efeito_valor == ID_FORCA) { sprintf(titulo, "FORCA"); sprintf(descricao, "+%d FORCA", c.magnitude); }
+            if (c.efeito_valor == ID_FORCA) { 
+                sprintf(titulo, "FORCA"); // Sem cedilha para evitar bugs
+                sprintf(descricao, "+%d FORCA", c.magnitude); 
+            }
             else if (c.efeito_valor == ID_REGEN_RODADAS) { 
-                sprintf(titulo, "REGEN"); 
+                sprintf(titulo, "CURA TOTAL"); // NOME ALTERADO
                 if (c.custo_energia == -1) sprintf(descricao, "X TURNOS");
                 else sprintf(descricao, "%d TURNOS", c.magnitude); 
             }
-            else if (c.efeito_valor == ID_CURA_INSTANT) { sprintf(titulo, "CURA"); sprintf(descricao, "+%d VIDA", c.magnitude); }
-            else { sprintf(titulo, "DESTREZA"); sprintf(descricao, "+%d DEF+", c.magnitude); }
+            else if (c.efeito_valor == ID_CURA_INSTANT) { 
+                sprintf(titulo, "CURA"); 
+                sprintf(descricao, "+%d VIDA", c.magnitude); 
+            }
+            else { 
+                sprintf(titulo, "DESTREZA"); 
+                sprintf(descricao, "+%d DEF+", c.magnitude); 
+            }
             break;
         case DEBUFF:
             img_icone = r->img_debuff;
-            if (c.efeito_valor == ID_VENENO) { sprintf(titulo, "VENENO"); sprintf(descricao, "%d VEN", c.magnitude); }
-            else if (c.efeito_valor == ID_SONO) { sprintf(titulo, "SONO"); sprintf(descricao, "%d TURNO", c.magnitude); }
-            else if (c.efeito_valor == ID_VULNERAVEL) { sprintf(titulo, "VULNER"); sprintf(descricao, "50%% +DANO"); }
-            else { sprintf(titulo, "FRAQUEZA"); sprintf(descricao, "25%% -ATK"); }
+            if (c.efeito_valor == ID_VENENO) { 
+                sprintf(titulo, "VENENO"); 
+                sprintf(descricao, "%d VEN", c.magnitude); 
+            }
+            else if (c.efeito_valor == ID_SONO) { 
+                sprintf(titulo, "SONO"); 
+                sprintf(descricao, "%d TURNO", c.magnitude); 
+            }
+            else if (c.efeito_valor == ID_VULNERAVEL) { 
+                sprintf(titulo, "VULNERAVEL"); // NOME ALTERADO
+                sprintf(descricao, "50%% +DANO"); 
+            }
+            else { 
+                sprintf(titulo, "FRAQUEZA"); 
+                sprintf(descricao, "25%% -ATK"); 
+            }
             break;
     }
 
@@ -155,7 +176,7 @@ void draw_card(Renderer* r, Card c, float x, float y) {
         al_draw_rounded_rectangle(x, y, x+CARD_W, y+CARD_H, 8, 8, al_map_rgb(0,0,0), 2);
     }
 
-    // 3. SÍMBOLO (Topo)
+    // 3. SÍMBOLO (Centralizado no topo)
     if (img_icone) {
         int iw = al_get_bitmap_width(img_icone);
         int ih = al_get_bitmap_height(img_icone);
@@ -164,17 +185,25 @@ void draw_card(Renderer* r, Card c, float x, float y) {
         al_draw_bitmap(img_icone, icon_x, icon_y, 0);
     }
 
-    // 4. TEXTOS (Meio e Fundo)
+    // 4. CUSTO DE ENERGIA (Token Centralizado cy-5)
+    float cx = x + 22; 
+    float cy = y + 22; 
+    float radius = 11; 
+
+    al_draw_filled_circle(cx + 2, cy + 2, radius, al_map_rgba(0, 0, 0, 100));
+    al_draw_filled_circle(cx, cy, radius, al_map_rgb(218, 165, 32)); 
+    al_draw_filled_circle(cx, cy, radius - 4, al_map_rgb(255, 255, 255)); 
+    al_draw_circle(cx, cy, radius - 4, al_map_rgb(139, 69, 19), 2); 
+
+    char custo[5]; 
+    if (c.custo_energia == -1) sprintf(custo, "X");
+    else sprintf(custo, "%d", c.custo_energia);
+    
+    al_draw_text(r->font, al_map_rgb(0,0,0), cx, cy - 5, ALLEGRO_ALIGN_CENTER, custo);
+
+    // 5. Textos
     al_draw_text(r->font, cor_texto, x + CARD_W/2, y + 90, ALLEGRO_ALIGN_CENTER, titulo);
     al_draw_text(r->font, cor_texto, x + CARD_W/2, y + 115, ALLEGRO_ALIGN_CENTER, descricao);
-
-    // 5. CUSTO DE ENERGIA (Texto puro no canto esquerdo)
-    char custo_str[20];
-    if (c.custo_energia == -1) sprintf(custo_str, "Custo: X");
-    else sprintf(custo_str, "Custo: %d", c.custo_energia);
-    
-    // Desenha em PRETO, alinhado à ESQUERDA, com uma margem de 8 pixels
-    al_draw_text(r->font, al_map_rgb(0,0,0), x + 8, y + 8, ALLEGRO_ALIGN_LEFT, custo_str);
 }
 
 // Desenha os montes
@@ -213,7 +242,6 @@ void FillRenderer(Renderer* r) {
     r->img_base         = al_load_bitmap("base.png");
     r->img_background   = al_load_bitmap("background.png");
 
-    // Cartas
     r->img_verso    = al_load_bitmap("verso.png"); 
     r->img_ataque   = al_load_bitmap("ataque.png");
     r->img_defesa   = al_load_bitmap("defesa.png");
@@ -224,7 +252,6 @@ void FillRenderer(Renderer* r) {
     if (!r->img_player) printf("AVISO: player.png nao encontrado.\n");
     if (!r->img_base)   printf("AVISO: base.png nao encontrado.\n");
     if (!r->img_verso)  printf("AVISO: verso.png nao encontrado.\n");
-    if (!r->img_ataque) printf("AVISO: Imagens de icones das cartas (ataque.png, etc) podem estar faltando.\n");
 }
 
 void ClearRenderer(Renderer* r) {
@@ -259,19 +286,14 @@ void Render(Renderer* r, GameState state, Player p, Enemy inimigos[], int sel_c,
         al_draw_text(r->font, al_map_rgb(255,255,255), SCREEN_W/2, SCREEN_H/2 + 40, ALLEGRO_ALIGN_CENTER, "Pressione Q");
     }
     else {
-        // Desenha Fundo
         if (r->img_background) al_draw_bitmap(r->img_background, 0, 0, 0);
 
-        // Desenha Jogador
         draw_creature(r, p.stats, PLAYER_X, PLAYER_Y, "Jogador");
-        
-        // Desenha Inimigos
         for(int i=0; i<2; i++) {
             if (inimigos[i].stats.hp_atual > 0) {
                 float ex = (i==0) ? ENEMY_1_X : ENEMY_2_X;
                 draw_creature(r, inimigos[i].stats, ex, 400, "Inimigo");
                 
-                // Texto de ação ou sono
                 if (inimigos[i].stats.dormindo > 0) {
                     al_draw_text(r->font, al_map_rgb(200,200,255), ex, 250, ALLEGRO_ALIGN_CENTER, "Zzz...");
                 } else {
@@ -287,20 +309,16 @@ void Render(Renderer* r, GameState state, Player p, Enemy inimigos[], int sel_c,
             }
         }
 
-        // Desenha Montes
         draw_deck_pile(r, DECK_X, DECK_Y, p.pilha_compra.num_cartas, "COMPRA");
         draw_deck_pile(r, DISCARD_X, DISCARD_Y, p.pilha_descarte.num_cartas, "DESCARTE");
 
-        // Desenha Mão
         for(int i=0; i<p.mao.num_cartas; i++) {
             float y = HAND_Y;
-            if (i == sel_c) y -= 30; 
-            
-            draw_card(r, p.mao.cartas[i], HAND_X + (i*130), y);
-            
             if (i == sel_c) {
-                 al_draw_rounded_rectangle(HAND_X + (i*130) - 2, y - 2, HAND_X + (i*130) + CARD_W + 2, y + CARD_H + 2, 10, 10, al_map_rgb(255,255,0), 3);
+                y -= 30; 
+                al_draw_rounded_rectangle(HAND_X + (i*130) - 2, y - 2, HAND_X + (i*130) + CARD_W + 2, y + CARD_H + 2, 10, 10, al_map_rgb(255,255,0), 3);
             }
+            draw_card(r, p.mao.cartas[i], HAND_X + (i*130), y);
         }
         
         char en[20];

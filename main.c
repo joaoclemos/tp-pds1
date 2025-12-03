@@ -1,3 +1,8 @@
+/*
+ * main.c
+ * MODIFICADO: Correção visual da morte dos inimigos (Delay).
+ */
+
 #include <allegro5/allegro5.h>
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_primitives.h>
@@ -70,6 +75,12 @@ int main() {
                     }
                     if (k == ALLEGRO_KEY_ESCAPE) current_state = GAME_STATE_ENEMY_TURN;
 
+                    // --- DEBUG KEYS ---
+                    if (k == ALLEGRO_KEY_SPACE) { 
+                        inimigos[0].stats.hp_atual = 0; 
+                        inimigos[1].stats.hp_atual = 0; 
+                    }
+
                 } else {
                     if (k == ALLEGRO_KEY_LEFT || k == ALLEGRO_KEY_RIGHT) selected_enemy = !selected_enemy;
                     if (k == ALLEGRO_KEY_ESCAPE) mirando = 0; 
@@ -93,6 +104,12 @@ int main() {
                 break;
 
             case GAME_STATE_NEW_COMBAT:
+                // --- TRUQUE PARA O DEBUG FUNCIONAR ---
+                // Força um desenho da tela com os inimigos mortos antes de recriá-los
+                Render(&renderer, GAME_STATE_PLAYER_TURN, player, inimigos, -1, -1, 0);
+                al_rest(1.0); // Espera 1 segundo para você ver que eles morreram
+
+                printf("Iniciando combate %d...\n", vitorias + 1);
                 inimigos[0] = create_enemy();
                 inimigos[1] = create_enemy();
                 player.pilha_compra = player.baralho_completo;
@@ -112,7 +129,10 @@ int main() {
                 break;
 
             case GAME_STATE_ENEMY_TURN:
-                al_rest(0.5);
+                // Desenha antes de esperar para ver a ação
+                Render(&renderer, current_state, player, inimigos, -1, -1, 0);
+                al_rest(0.8);
+                
                 if(inimigos[0].stats.hp_atual > 0) inimigos[0].stats.escudo = 0;
                 if(inimigos[1].stats.hp_atual > 0) inimigos[1].stats.escudo = 0;
                 execute_enemy_turn(&player, inimigos);
