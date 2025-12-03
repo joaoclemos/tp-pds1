@@ -15,15 +15,16 @@ typedef struct {
     ALLEGRO_BITMAP* img_player;
     ALLEGRO_BITMAP* img_enemy_weak;   
     ALLEGRO_BITMAP* img_enemy_strong; 
+    ALLEGRO_BITMAP* img_boss;
     ALLEGRO_BITMAP* img_background; 
     ALLEGRO_BITMAP* img_base; 
 
-    // --- IMAGENS DE FUNDO DE CARTAS / GENÉRICAS ---
+    // --- IMAGENS DE CARTAS (FRENTES) ---
     ALLEGRO_BITMAP* img_verso;     
     ALLEGRO_BITMAP* img_ataque;    
     ALLEGRO_BITMAP* img_defesa;    
-    ALLEGRO_BITMAP* img_buff_gen;   
-    ALLEGRO_BITMAP* img_debuff_gen; 
+    ALLEGRO_BITMAP* img_especial;
+    // img_buff e img_debuff removidos aqui!
 
     // --- ÍCONES ESPECÍFICOS (TODOS) ---
     ALLEGRO_BITMAP* icon_forca;
@@ -33,7 +34,9 @@ typedef struct {
     ALLEGRO_BITMAP* icon_supercura;
     ALLEGRO_BITMAP* icon_troca; 
     ALLEGRO_BITMAP* icon_sono;
-    ALLEGRO_BITMAP* icon_fraqueza; // <--- NOVO ÍCONE
+    ALLEGRO_BITMAP* icon_fraqueza; 
+    ALLEGRO_BITMAP* icon_vampiro;
+    ALLEGRO_BITMAP* icon_destreza; 
 
 } Renderer;
 

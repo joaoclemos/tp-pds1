@@ -1,8 +1,3 @@
-/*
- * main.c
- * MODIFICADO: Correção visual da morte dos inimigos (Delay).
- */
-
 #include <allegro5/allegro5.h>
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_primitives.h>
@@ -75,7 +70,6 @@ int main() {
                     }
                     if (k == ALLEGRO_KEY_ESCAPE) current_state = GAME_STATE_ENEMY_TURN;
 
-                    // --- DEBUG KEYS ---
                     if (k == ALLEGRO_KEY_SPACE) { 
                         inimigos[0].stats.hp_atual = 0; 
                         inimigos[1].stats.hp_atual = 0; 
@@ -104,14 +98,21 @@ int main() {
                 break;
 
             case GAME_STATE_NEW_COMBAT:
-                // --- TRUQUE PARA O DEBUG FUNCIONAR ---
-                // Força um desenho da tela com os inimigos mortos antes de recriá-los
+                // Desenha inimigos mortos
                 Render(&renderer, GAME_STATE_PLAYER_TURN, player, inimigos, -1, -1, 0);
-                al_rest(1.0); // Espera 1 segundo para você ver que eles morreram
+                al_rest(1.0); 
 
                 printf("Iniciando combate %d...\n", vitorias + 1);
-                inimigos[0] = create_enemy();
-                inimigos[1] = create_enemy();
+                
+                // LÓGICA DO BOSS (11ª RODADA)
+                if (vitorias == 10) {
+                    inimigos[0] = create_boss();
+                    inimigos[1].stats.hp_atual = 0; // Inimigo 2 já começa morto
+                } else {
+                    inimigos[0] = create_enemy();
+                    inimigos[1] = create_enemy();
+                }
+
                 player.pilha_compra = player.baralho_completo;
                 shuffle_pilha(&player.pilha_compra);
                 player.mao.num_cartas = 0;
@@ -123,13 +124,12 @@ int main() {
             case GAME_STATE_PLAYER_TURN:
                 if (inimigos[0].stats.hp_atual <= 0 && inimigos[1].stats.hp_atual <= 0) {
                     vitorias++;
-                    if (vitorias >= 10) current_state = GAME_STATE_VICTORY;
+                    if (vitorias >= 11) current_state = GAME_STATE_VICTORY; // Venceu o Boss
                     else current_state = GAME_STATE_NEW_COMBAT;
                 }
                 break;
 
             case GAME_STATE_ENEMY_TURN:
-                // Desenha antes de esperar para ver a ação
                 Render(&renderer, current_state, player, inimigos, -1, -1, 0);
                 al_rest(0.8);
                 

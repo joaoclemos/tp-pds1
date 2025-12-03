@@ -1,11 +1,11 @@
 /*
- * logic.c - VERSÃO DE CORREÇÃO
- * CORRIGIDO: Inclui constants.h para usar CUSTO_X
+ * logic.c - VERSÃO CORRIGIDA
+ * Inclui constants.h para corrigir o erro de CUSTO_X
  */
 
 #include "logic.h"
 #include "setup.h"
-#include "constants.h" // <--- ADICIONADO: Necessário para CUSTO_X
+#include "constants.h" // <--- ESSENCIAL: Corrige o erro 'CUSTO_X undeclared'
 #include <stdio.h>
 
 void move_card(PilhaCartas* origem, PilhaCartas* destino, int index) {
@@ -39,7 +39,7 @@ void apply_turn_start_effects(Creature* c) {
         c->veneno--; 
     }
     if (c->regeneracao > 0) {
-        c->hp_atual += 5; // Cura 5 por turno
+        c->hp_atual += 5; 
         if (c->hp_atual > c->hp_max) c->hp_atual = c->hp_max;
         c->regeneracao--;
     }
@@ -70,23 +70,15 @@ void start_player_turn(Player* player) {
 int play_card(Player* player, int card_index, Enemy* target) {
     Card carta = player->mao.cartas[card_index];
     
-    // LÓGICA DE CUSTO X
     int custo_real = carta.custo_energia;
     int valor_X = 0;
 
     if (carta.custo_energia == CUSTO_X) {
         valor_X = player->energia_atual;
         custo_real = valor_X;
-        
-        if (valor_X <= 0) {
-            printf("Sem energia para carta X!\n");
-            return 0;
-        }
+        if (valor_X <= 0) return 0;
     } else {
-        if (player->energia_atual < custo_real) {
-            printf("Sem energia!\n");
-            return 0;
-        }
+        if (player->energia_atual < custo_real) return 0;
     }
 
     player->energia_atual -= custo_real;
@@ -95,6 +87,9 @@ int play_card(Player* player, int card_index, Enemy* target) {
         case ATAQUE:
             if (target != NULL) {
                 int dano = calculate_damage(carta.efeito_valor, &player->stats, &target->stats);
+                
+                int dano_vampirico = dano;
+
                 if (target->stats.escudo > 0) {
                     if (target->stats.escudo >= dano) {
                         target->stats.escudo -= dano;
@@ -106,6 +101,12 @@ int play_card(Player* player, int card_index, Enemy* target) {
                 }
                 target->stats.hp_atual -= dano;
                 if (target->stats.hp_atual < 0) target->stats.hp_atual = 0;
+
+                if (carta.is_vampiric) {
+                    player->stats.hp_atual += dano_vampirico; 
+                    if (player->stats.hp_atual > player->stats.hp_max) 
+                        player->stats.hp_atual = player->stats.hp_max;
+                }
             }
             break;
             
@@ -119,7 +120,6 @@ int play_card(Player* player, int card_index, Enemy* target) {
             
             if (carta.efeito_valor == ID_CURA_INSTANT) {
                 int cura = carta.magnitude;
-                // Se for cura X, escala com a energia gasta
                 if (carta.custo_energia == CUSTO_X) cura = valor_X * 5; 
                 player->stats.hp_atual += cura;
                 if (player->stats.hp_atual > player->stats.hp_max) player->stats.hp_atual = player->stats.hp_max;
@@ -127,7 +127,7 @@ int play_card(Player* player, int card_index, Enemy* target) {
             
             if (carta.efeito_valor == ID_REGEN_RODADAS) {
                 int turnos = carta.magnitude;
-                if (carta.custo_energia == CUSTO_X) turnos = valor_X; // X turnos
+                if (carta.custo_energia == CUSTO_X) turnos = valor_X;
                 player->stats.regeneracao += turnos;
             }
             break;
@@ -164,7 +164,6 @@ void execute_enemy_turn(Player* player, Enemy inimigos[]) {
         if (inimigos[i].stats.hp_atual > 0) {
             
             if (inimigos[i].stats.dormindo > 0) {
-                printf("Inimigo %d esta DORMINDO\n", i);
                 continue; 
             }
 

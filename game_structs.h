@@ -6,8 +6,8 @@ typedef enum {
     ATAQUE,
     DEFESA,
     ESPECIAL, 
-    BUFF,     // Coisas boas pro jogador
-    DEBUFF    // Coisas ruins pro inimigo
+    BUFF,     
+    DEBUFF    
 } TipoCarta;
 
 // --- IDENTIFICADORES DE EFEITO ---
@@ -24,23 +24,21 @@ typedef enum {
 typedef struct {
     TipoCarta tipo;    
     int custo_energia; 
-    int efeito_valor;  // ID do efeito ou valor do dano
-    int magnitude;     // Força do efeito (ex: 2 de força, 3 turnos)
+    int efeito_valor;  
+    int magnitude;     
+    int is_vampiric;   
 } Card;
 
-// --- PILHA DE CARTAS ---
 typedef struct {
     Card cartas[50]; 
     int num_cartas;  
 } PilhaCartas;
 
-// --- CRIATURA ---
 typedef struct {
     int hp_atual; 
     int hp_max;   
     int escudo;
     
-    // Status
     int forca;      
     int destreza;   
     int veneno;     
@@ -50,7 +48,6 @@ typedef struct {
     int dormindo;    
 } Creature;
 
-// --- O JOGADOR ---
 typedef struct {
     Creature stats;      
     int energia_atual;   
@@ -62,19 +59,18 @@ typedef struct {
     PilhaCartas pilha_descarte;   
 } Player;
 
-// --- TIPOS DE INIMIGO ---
+// --- TIPOS DE INIMIGO (ADICIONADO BOSS) ---
 typedef enum {
     FRACO,
-    FORTE
+    FORTE,
+    BOSS  // <--- NOVO TIPO
 } TipoInimigo;
 
-// --- AÇÃO DA IA ---
 typedef struct {
     TipoCarta tipo_acao; 
     int valor_efeito;    
 } AI_Action;
 
-// --- O INIMIGO ---
 typedef struct {
     Creature stats;      
     TipoInimigo tipo;    
@@ -84,7 +80,6 @@ typedef struct {
     int acao_ia_atual;     
 } Enemy;
 
-// --- ESTADOS DO JOGO ---
 typedef enum {
     GAME_STATE_START,       
     GAME_STATE_NEW_COMBAT,  
