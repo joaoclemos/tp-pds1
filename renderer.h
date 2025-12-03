@@ -7,27 +7,34 @@
 #include "constants.h"
 #include "game_structs.h"
 
-// Estrutura que guarda tudo necessário para desenhar
 typedef struct {
-    ALLEGRO_DISPLAY* display; // A Janela
-    ALLEGRO_FONT* font;       // A Fonte do texto
+    ALLEGRO_DISPLAY* display;
+    ALLEGRO_FONT* font;
     
-    // Imagens que vamos carregar do disco
+    // --- IMAGENS DE PERSONAGENS E CENÁRIO ---
     ALLEGRO_BITMAP* img_player;
-    ALLEGRO_BITMAP* img_enemy_weak;
-    ALLEGRO_BITMAP* img_enemy_strong;
-    ALLEGRO_BITMAP* img_card;
-    ALLEGRO_BITMAP* img_background;
+    ALLEGRO_BITMAP* img_enemy_weak;   
+    ALLEGRO_BITMAP* img_enemy_strong; 
+    ALLEGRO_BITMAP* img_background; 
+    ALLEGRO_BITMAP* img_base; // Base de pedra
+
+    // --- IMAGENS DE CARTAS ---
+    ALLEGRO_BITMAP* img_verso;     // Verso da carta (para os montes)
+    ALLEGRO_BITMAP* img_ataque;    // Frente Ataque
+    ALLEGRO_BITMAP* img_defesa;    // Frente Defesa
+    ALLEGRO_BITMAP* img_especial;  // Frente Especial
+    ALLEGRO_BITMAP* img_buff;      // Frente Buffs
+    ALLEGRO_BITMAP* img_debuff;    // Frente Debuffs
+
 } Renderer;
 
-// Inicia a janela e carrega imagens
 void FillRenderer(Renderer* renderer);
-
-// Limpa a memória ao fechar
 void ClearRenderer(Renderer* renderer);
 
-// Função PRINCIPAL que desenha tudo na tela a cada frame
-void Render(Renderer* renderer, GameState current_state, Player player, Enemy inimigos[], 
+void Render(Renderer* renderer,
+            GameState current_state,
+            Player player,
+            Enemy inimigos[],
             int carta_sel, int inimigo_sel, int selecionando_alvo);
 
 #endif

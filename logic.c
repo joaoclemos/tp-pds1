@@ -1,126 +1,178 @@
+/*
+ * logic.c - VERSÃO DE CORREÇÃO
+ * CORRIGIDO: Inclui constants.h para usar CUSTO_X
+ */
+
 #include "logic.h"
 #include "setup.h"
+#include "constants.h" // <--- ADICIONADO: Necessário para CUSTO_X
 #include <stdio.h>
 
-// Função auxiliar: Move UMA carta de uma pilha para outra
 void move_card(PilhaCartas* origem, PilhaCartas* destino, int index) {
-    if (origem->num_cartas <= 0) return; // Se vazio, não faz nada
-
-    // Copia a carta para o final da pilha de destino
+    if (origem->num_cartas <= 0) return;
     destino->cartas[destino->num_cartas] = origem->cartas[index];
     destino->num_cartas++;
-
-    // Remove a carta da origem e puxa as outras para tapar o buraco
     for (int i = index; i < origem->num_cartas - 1; i++) {
         origem->cartas[i] = origem->cartas[i + 1];
     }
     origem->num_cartas--;
 }
 
-// Compra 'n' cartas
 void draw_cards(Player* player, int n) {
     for (int i = 0; i < n; i++) {
-        // Se a pilha de compra acabar...
         if (player->pilha_compra.num_cartas == 0) {
-            // ...e o descarte também estiver vazio, não dá pra comprar.
             if (player->pilha_descarte.num_cartas == 0) break;
-            
-            // Senão, recicla o descarte: move tudo de volta para a compra
             while (player->pilha_descarte.num_cartas > 0) {
                 move_card(&player->pilha_descarte, &player->pilha_compra, 0);
             }
-            shuffle_pilha(&player->pilha_compra); // Embaralha de novo
+            shuffle_pilha(&player->pilha_compra); 
         }
-        // Pega a carta do topo da pilha e move para a mão
         int topo = player->pilha_compra.num_cartas - 1;
         move_card(&player->pilha_compra, &player->mao, topo);
     }
 }
 
-// Prepara o turno do jogador
+void apply_turn_start_effects(Creature* c) {
+    if (c->veneno > 0) {
+        c->hp_atual -= c->veneno;
+        if (c->hp_atual < 0) c->hp_atual = 0;
+        c->veneno--; 
+    }
+    if (c->regeneracao > 0) {
+        c->hp_atual += 5; // Cura 5 por turno
+        if (c->hp_atual > c->hp_max) c->hp_atual = c->hp_max;
+        c->regeneracao--;
+    }
+    if (c->vulneravel > 0) c->vulneravel--;
+    if (c->fraco > 0) c->fraco--;
+    if (c->dormindo > 0) c->dormindo--; 
+    c->escudo = 0;
+}
+
+int calculate_damage(int base, Creature* atacante, Creature* alvo) {
+    float dano = (float)base;
+    dano += atacante->forca;
+    if (atacante->fraco > 0) dano *= 0.75f;
+    if (alvo->vulneravel > 0) dano *= 1.50f;
+    if (dano < 0) dano = 0;
+    return (int)dano;
+}
+
 void start_player_turn(Player* player) {
-    player->energia_atual = player->energia_max; // Enche energia
-    player->stats.escudo = 0; // Escudo some no inicio do turno
-    
-    // Descarta todas as cartas que sobraram na mão
+    apply_turn_start_effects(&player->stats);
+    player->energia_atual = player->energia_max;
     while (player->mao.num_cartas > 0) {
         move_card(&player->mao, &player->pilha_descarte, 0);
     }
-    // Compra 5 novas cartas
     draw_cards(player, 5);
 }
 
-// O Jogador usa uma carta
 int play_card(Player* player, int card_index, Enemy* target) {
     Card carta = player->mao.cartas[card_index];
+    
+    // LÓGICA DE CUSTO X
+    int custo_real = carta.custo_energia;
+    int valor_X = 0;
 
-    // Verifica se tem energia suficiente
-    if (player->energia_atual < carta.custo_energia) {
-        printf("Sem energia!\n");
-        return 0; // Falhou, não faz nada
+    if (carta.custo_energia == CUSTO_X) {
+        valor_X = player->energia_atual;
+        custo_real = valor_X;
+        
+        if (valor_X <= 0) {
+            printf("Sem energia para carta X!\n");
+            return 0;
+        }
+    } else {
+        if (player->energia_atual < custo_real) {
+            printf("Sem energia!\n");
+            return 0;
+        }
     }
-    // Gasta a energia
-    player->energia_atual -= carta.custo_energia;
 
-    // Aplica o efeito da carta
+    player->energia_atual -= custo_real;
+
     switch (carta.tipo) {
         case ATAQUE:
             if (target != NULL) {
-                int dano = carta.efeito_valor;
-                // Se o inimigo tem escudo, o dano bate no escudo primeiro
+                int dano = calculate_damage(carta.efeito_valor, &player->stats, &target->stats);
                 if (target->stats.escudo > 0) {
                     if (target->stats.escudo >= dano) {
-                        target->stats.escudo -= dano; // Escudo absorveu tudo
+                        target->stats.escudo -= dano;
                         dano = 0;
                     } else {
-                        dano -= target->stats.escudo; // Escudo quebrou, sobra dano
+                        dano -= target->stats.escudo;
                         target->stats.escudo = 0;
                     }
                 }
-                // O resto do dano vai na vida
                 target->stats.hp_atual -= dano;
                 if (target->stats.hp_atual < 0) target->stats.hp_atual = 0;
             }
             break;
             
         case DEFESA:
-            // Ganha escudo
-            player->stats.escudo += carta.efeito_valor;
+            player->stats.escudo += (carta.efeito_valor + player->stats.destreza);
             break;
             
+        case BUFF:
+            if (carta.efeito_valor == ID_FORCA) player->stats.forca += carta.magnitude;
+            if (carta.efeito_valor == ID_DESTREZA) player->stats.destreza += carta.magnitude;
+            
+            if (carta.efeito_valor == ID_CURA_INSTANT) {
+                int cura = carta.magnitude;
+                // Se for cura X, escala com a energia gasta
+                if (carta.custo_energia == CUSTO_X) cura = valor_X * 5; 
+                player->stats.hp_atual += cura;
+                if (player->stats.hp_atual > player->stats.hp_max) player->stats.hp_atual = player->stats.hp_max;
+            }
+            
+            if (carta.efeito_valor == ID_REGEN_RODADAS) {
+                int turnos = carta.magnitude;
+                if (carta.custo_energia == CUSTO_X) turnos = valor_X; // X turnos
+                player->stats.regeneracao += turnos;
+            }
+            break;
+
+        case DEBUFF:
+            if (target != NULL) {
+                if (carta.efeito_valor == ID_VENENO) target->stats.veneno += carta.magnitude;
+                if (carta.efeito_valor == ID_VULNERAVEL) target->stats.vulneravel += carta.magnitude;
+                if (carta.efeito_valor == ID_FRAQUEZA) target->stats.fraco += carta.magnitude;
+                if (carta.efeito_valor == ID_SONO) target->stats.dormindo += carta.magnitude;
+            }
+            break;
+
         case ESPECIAL: 
-             // Carta Especial: Troca a mão toda
-             // (Remove todas as cartas menos a que está sendo usada agora)
              while (player->mao.num_cartas > 1) {
                  int idx_to_remove = (0 == card_index) ? 1 : 0;
                  move_card(&player->mao, &player->pilha_descarte, idx_to_remove);
                  if (idx_to_remove < card_index) card_index--;
             }
-            draw_cards(player, 5); // Compra 5 novas
+            draw_cards(player, 5);
             break;
     }
     
-    // Joga a carta usada no descarte
     move_card(&player->mao, &player->pilha_descarte, card_index);
-    return 1; // Sucesso
+    return 1; 
 }
 
-// Turno dos Inimigos (IA)
 void execute_enemy_turn(Player* player, Enemy inimigos[]) {
-    printf("\n--- INIMIGOS AGINDO ---\n");
-    
-    // Passa por cada inimigo (0 e 1)
+    for (int i=0; i<2; i++) {
+        if (inimigos[i].stats.hp_atual > 0) apply_turn_start_effects(&inimigos[i].stats);
+    }
+
     for (int i = 0; i < 2; i++) {
         if (inimigos[i].stats.hp_atual > 0) {
             
-            // Descobre o que ele vai fazer agora (do ciclo)
+            if (inimigos[i].stats.dormindo > 0) {
+                printf("Inimigo %d esta DORMINDO\n", i);
+                continue; 
+            }
+
             AI_Action acao = inimigos[i].ia_ciclo[inimigos[i].acao_ia_atual];
 
             if (acao.tipo_acao == ATAQUE) {
-                printf("Inimigo %d ATACA com %d\n", i, acao.valor_efeito);
-                int dano = acao.valor_efeito;
+                int dano = calculate_damage(acao.valor_efeito, &inimigos[i].stats, &player->stats);
                 
-                // Dano bate no escudo do jogador primeiro
                 if (player->stats.escudo > 0) {
                     if (player->stats.escudo >= dano) {
                         player->stats.escudo -= dano;
@@ -130,19 +182,14 @@ void execute_enemy_turn(Player* player, Enemy inimigos[]) {
                         player->stats.escudo = 0;
                     }
                 }
-                // Resto tira vida
                 player->stats.hp_atual -= dano;
                 if (player->stats.hp_atual < 0) player->stats.hp_atual = 0;
 
             } else {
-                // Inimigo defende
-                printf("Inimigo %d DEFENDE com %d\n", i, acao.valor_efeito);
-                inimigos[i].stats.escudo += acao.valor_efeito;
+                inimigos[i].stats.escudo += (acao.valor_efeito + inimigos[i].stats.destreza);
             }
 
-            // Avança para o próximo passo do ciclo
             inimigos[i].acao_ia_atual++;
-            // Se chegou no fim do ciclo, volta pro começo
             if (inimigos[i].acao_ia_atual >= inimigos[i].num_acoes_ia) {
                 inimigos[i].acao_ia_atual = 0;
             }
