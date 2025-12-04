@@ -1,0 +1,1 @@
+cd "/c/Users/Dell/Documents/joao/programacao/Slay-the-spire"
