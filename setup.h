@@ -6,7 +6,7 @@ Card create_random_card(TipoCarta tipo, int custo);
 PilhaCartas create_initial_deck();
 Player setup_player();
 Enemy create_enemy();
-Enemy create_boss(); // <--- NOVA FUNÇÃO
+Enemy create_boss(); 
 void shuffle_pilha(PilhaCartas *pilha);
 
 #endif

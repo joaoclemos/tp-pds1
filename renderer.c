@@ -1,21 +1,11 @@
-/*
- * renderer.c
- *
- * Responsável por desenhar tudo na tela.
- * VERSÃO FINAL: Inclui Menu Inicial, correção de alinhamento da Base,
- * e suporte a todos os ícones de Buff/Debuff e Custo.
- */
-
 #include "renderer.h"
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_ttf.h>
 #include <stdio.h>
 #include "utils.h"
 
-// --- DESENHA ÍCONES DE STATUS ---
 void draw_status_icons(Renderer* r, Creature c, float x, float y) {
     float offset_x = 0;
-    
     if (c.forca > 0) {
         al_draw_filled_circle(x + offset_x, y, 10, al_map_rgb(200, 50, 50));
         al_draw_textf(r->font, al_map_rgb(255,255,255), x + offset_x, y-5, ALLEGRO_ALIGN_CENTER, "F:%d", c.forca);
@@ -43,13 +33,11 @@ void draw_status_icons(Renderer* r, Creature c, float x, float y) {
     }
 }
 
-// --- DESENHA CRIATURAS ---
 void draw_creature(Renderer* renderer, Creature creature, float x, float y, const char* label) {
     ALLEGRO_BITMAP* img_char = NULL;
     float char_w = 0, char_h = 0;
     float base_w = 0, base_h = 0;
     
-    // 1. Lógica de detecção (Boss, Forte, Fraco)
     if (strcmp(label, "Jogador") == 0) img_char = renderer->img_player;
     else if (creature.hp_max > 200) img_char = renderer->img_boss; 
     else if (creature.hp_max > 40) img_char = renderer->img_enemy_strong; 
@@ -64,15 +52,12 @@ void draw_creature(Renderer* renderer, Creature creature, float x, float y, cons
         base_h = al_get_bitmap_height(renderer->img_base);
     } else { base_h = 30; }
 
-    // 2. BASE DE PEDRA
     if (renderer->img_base) al_draw_bitmap(renderer->img_base, x - base_w/2, y, 0);
     else al_draw_filled_ellipse(x, y + 40, 60, 20, al_map_rgb(100, 100, 100));
 
-    // 3. PERSONAGEM (Ajustado +15px para baixo)
     if (img_char) al_draw_bitmap(img_char, x - char_w/2, y - char_h + 15, 0);
     else al_draw_filled_rectangle(x-30, y-100, x+30, y, al_map_rgb(150,150,150));
 
-    // 4. INTERFACE
     al_draw_text(renderer->font, al_map_rgb(255,255,255), x, y - char_h - 25 + 15, ALLEGRO_ALIGN_CENTER, label);
     
     float hp_y_start = y + base_h + 15;
@@ -93,14 +78,12 @@ void draw_creature(Renderer* renderer, Creature creature, float x, float y, cons
     draw_status_icons(renderer, creature, x - 40, hp_y_end + 20);
 }
 
-// --- DESENHA A CARTA ---
 void draw_card(Renderer* r, Card c, float x, float y) {
     ALLEGRO_BITMAP* img_icone = NULL;
     ALLEGRO_COLOR cor_texto = al_map_rgb(0,0,0);
     char titulo[20];
     char descricao[30];
 
-    // Lógica de seleção do ícone e texto
     switch (c.tipo) {
         case ATAQUE:
             if (c.is_vampiric) { img_icone = r->icon_vampiro; sprintf(titulo, "VAMPIRO"); sprintf(descricao, "%d DMG+CURA", c.efeito_valor); } 
@@ -119,28 +102,14 @@ void draw_card(Renderer* r, Card c, float x, float y) {
                 if (c.custo_energia == -1) sprintf(descricao, "X TURNOS");
                 else sprintf(descricao, "%d TURNOS", c.magnitude); 
             }
-            else if (c.efeito_valor == ID_CURA_INSTANT) { 
-                img_icone = r->icon_cura; sprintf(titulo, "CURA"); sprintf(descricao, "+%d VIDA", c.magnitude); 
-            }
-            else { // Destreza
-                img_icone = r->icon_destreza; 
-                sprintf(titulo, "DESTREZA"); sprintf(descricao, "+%d DEF+", c.magnitude); 
-            }
+            else if (c.efeito_valor == ID_CURA_INSTANT) { img_icone = r->icon_cura; sprintf(titulo, "CURA"); sprintf(descricao, "+%d VIDA", c.magnitude); }
+            else { img_icone = r->icon_destreza; sprintf(titulo, "DESTREZA"); sprintf(descricao, "+%d DEF+", c.magnitude); }
             break;
         case DEBUFF:
-            if (c.efeito_valor == ID_VENENO) { 
-                img_icone = r->icon_veneno; sprintf(titulo, "VENENO"); sprintf(descricao, "%d VEN", c.magnitude); 
-            }
-            else if (c.efeito_valor == ID_SONO) { 
-                img_icone = r->icon_sono; sprintf(titulo, "SONO"); sprintf(descricao, "%d TURNO", c.magnitude); 
-            }
-            else if (c.efeito_valor == ID_VULNERAVEL) { 
-                img_icone = r->icon_vulneravel; sprintf(titulo, "VULNERAVEL"); sprintf(descricao, "50%% +DANO"); 
-            }
-            else { 
-                img_icone = r->icon_fraqueza;
-                sprintf(titulo, "FRAQUEZA"); sprintf(descricao, "25%% -ATK"); 
-            }
+            if (c.efeito_valor == ID_VENENO) { img_icone = r->icon_veneno; sprintf(titulo, "VENENO"); sprintf(descricao, "%d VEN", c.magnitude); }
+            else if (c.efeito_valor == ID_SONO) { img_icone = r->icon_sono; sprintf(titulo, "SONO"); sprintf(descricao, "%d TURNO", c.magnitude); }
+            else if (c.efeito_valor == ID_VULNERAVEL) { img_icone = r->icon_vulneravel; sprintf(titulo, "VULNERAVEL"); sprintf(descricao, "50%% +DANO"); }
+            else { img_icone = r->icon_fraqueza; sprintf(titulo, "FRAQUEZA"); sprintf(descricao, "25%% -ATK"); }
             break;
     }
 
@@ -154,7 +123,6 @@ void draw_card(Renderer* r, Card c, float x, float y) {
 
     float cx = x + 22; float cy = y + 22; 
     float radius = 11; 
-
     al_draw_filled_circle(cx + 2, cy + 2, radius, al_map_rgba(0, 0, 0, 100));
     al_draw_filled_circle(cx, cy, radius, al_map_rgb(218, 165, 32)); 
     al_draw_filled_circle(cx, cy, radius - 4, al_map_rgb(255, 255, 255)); 
@@ -163,14 +131,12 @@ void draw_card(Renderer* r, Card c, float x, float y) {
     char custo[5]; 
     if (c.custo_energia == -1) sprintf(custo, "X");
     else sprintf(custo, "%d", c.custo_energia);
-    
     al_draw_text(r->font, al_map_rgb(0,0,0), cx, cy - 5, ALLEGRO_ALIGN_CENTER, custo);
 
     al_draw_text(r->font, cor_texto, x + CARD_W/2, y + 90, ALLEGRO_ALIGN_CENTER, titulo);
     al_draw_text(r->font, cor_texto, x + CARD_W/2, y + 115, ALLEGRO_ALIGN_CENTER, descricao);
 }
 
-// --- DESENHA MONTES DE CARTAS ---
 void draw_deck_pile(Renderer* r, int x, int y, int qtd, const char* label) {
     if (qtd > 0) {
         if (r->img_verso) {
@@ -187,26 +153,21 @@ void draw_deck_pile(Renderer* r, int x, int y, int qtd, const char* label) {
     al_draw_text(r->font, al_map_rgb(200,200,200), x + CARD_W/2, y + CARD_H + 10, ALLEGRO_ALIGN_CENTER, label);
 }
 
-// --- DESENHA TELA DE MENU ---
 void draw_menu_screen(Renderer* r) {
     if (r->img_background) {
         al_draw_bitmap(r->img_background, 0, 0, 0);
     } else {
         al_clear_to_color(al_map_rgb(20, 20, 40)); 
     }
-
-    al_draw_text(r->font, al_map_rgb(255, 255, 0), SCREEN_W / 2, SCREEN_H / 4, ALLEGRO_ALIGN_CENTER, "TRABALHO PRATICO PDS1");
-    al_draw_text(r->font, al_map_rgb(200, 200, 255), SCREEN_W / 2, SCREEN_H / 2, ALLEGRO_ALIGN_CENTER, "PRESSIONE ENTER PARA INICIAR A ESCALADA");
+    al_draw_text(r->font, al_map_rgb(255, 255, 0), SCREEN_W / 2, SCREEN_H / 4, ALLEGRO_ALIGN_CENTER, "SLAY THE SPIRE CLONE");
+    al_draw_text(r->font, al_map_rgb(200, 200, 255), SCREEN_W / 2, SCREEN_H / 2, ALLEGRO_ALIGN_CENTER, "PRESSIONE ENTER PARA INICIAR");
     al_draw_text(r->font, al_map_rgb(150, 150, 150), SCREEN_W / 2, SCREEN_H * 0.75, ALLEGRO_ALIGN_CENTER, "Q: Sair | ESC: Encerrar Turno");
 }
-
-// --- INICIALIZAÇÃO E LIMPEZA ---
 
 void FillRenderer(Renderer* r) {
     al_set_new_display_flags(ALLEGRO_RESIZABLE);
     r->display = al_create_display(SCREEN_W, SCREEN_H);
     must_init(r->display, "display");
-    
     must_init(al_init_font_addon(), "font");
     must_init(al_init_ttf_addon(), "ttf");
     must_init(al_init_image_addon(), "image");
@@ -214,7 +175,6 @@ void FillRenderer(Renderer* r) {
     r->font = al_load_font("font.ttf", 20, 0); 
     if (!r->font) r->font = al_create_builtin_font();
 
-    // --- CARREGAMENTO DAS IMAGENS --- (Usando fotos/path)
     r->img_player       = al_load_bitmap("fotos/player.png");
     r->img_enemy_weak   = al_load_bitmap("fotos/enemy_weak.png");
     r->img_enemy_strong = al_load_bitmap("fotos/enemy_strong.png");
@@ -226,9 +186,7 @@ void FillRenderer(Renderer* r) {
     r->img_ataque   = al_load_bitmap("fotos/ataque.png");
     r->img_defesa   = al_load_bitmap("fotos/defesa.png");
     r->img_especial = al_load_bitmap("fotos/especial.png"); 
-    // Removidas as referências a img_buff/debuff genéricos que causavam erro
-    
-    // Ícones
+
     r->icon_forca      = al_load_bitmap("fotos/forca.png");
     r->icon_vulneravel = al_load_bitmap("fotos/vulneravel.png");
     r->icon_veneno     = al_load_bitmap("fotos/veneno.png");
@@ -241,7 +199,6 @@ void FillRenderer(Renderer* r) {
     r->icon_destreza   = al_load_bitmap("fotos/destreza.png"); 
 
     if (!r->img_player) printf("AVISO: player.png nao encontrado.\n");
-    if (!r->img_especial) printf("AVISO: especial.png nao encontrado.\n");
 }
 
 void ClearRenderer(Renderer* r) {
@@ -285,7 +242,7 @@ void Render(Renderer* r, GameState state, Player p, Enemy inimigos[], int sel_c,
         al_draw_text(r->font, al_map_rgb(255,0,0), SCREEN_W/2, SCREEN_H/2, ALLEGRO_ALIGN_CENTER, "GAME OVER");
         al_draw_text(r->font, al_map_rgb(255,255,255), SCREEN_W/2, SCREEN_H/2 + 40, ALLEGRO_ALIGN_CENTER, "Pressione Q");
     }
-    else if (state == GAME_STATE_MENU) { // NOVO CASE
+    else if (state == GAME_STATE_MENU) { 
         draw_menu_screen(r);
     }
     else {

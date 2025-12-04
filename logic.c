@@ -3,6 +3,7 @@
 #include "constants.h"
 #include <stdio.h>
 
+// Move carta de uma pilha para outra
 void move_card(PilhaCartas* origem, PilhaCartas* destino, int index) {
     if (origem->num_cartas <= 0) return;
     destino->cartas[destino->num_cartas] = origem->cartas[index];
@@ -13,6 +14,7 @@ void move_card(PilhaCartas* origem, PilhaCartas* destino, int index) {
     origem->num_cartas--;
 }
 
+// Compra cartas (e recicla descarte se necessário)
 void draw_cards(Player* player, int n) {
     for (int i = 0; i < n; i++) {
         if (player->pilha_compra.num_cartas == 0) {
@@ -27,26 +29,25 @@ void draw_cards(Player* player, int n) {
     }
 }
 
+// Aplica efeitos de início de turno (Veneno, Regen)
 void apply_turn_start_effects(Creature* c) {
-    // 1. Veneno
     if (c->veneno > 0) {
         c->hp_atual -= c->veneno;
         if (c->hp_atual < 0) c->hp_atual = 0;
         c->veneno--; 
     }
-    // 2. Regen
     if (c->regeneracao > 0) {
         c->hp_atual += 5; 
         if (c->hp_atual > c->hp_max) c->hp_atual = c->hp_max;
         c->regeneracao--;
     }
-    // 3. Contadores
     if (c->vulneravel > 0) c->vulneravel--;
     if (c->fraco > 0) c->fraco--;
     if (c->dormindo > 0) c->dormindo--; 
     c->escudo = 0;
 }
 
+// Calcula dano considerando status
 int calculate_damage(int base, Creature* atacante, Creature* alvo) {
     float dano = (float)base;
     dano += atacante->forca;
@@ -56,6 +57,7 @@ int calculate_damage(int base, Creature* atacante, Creature* alvo) {
     return (int)dano;
 }
 
+// Inicia turno do jogador
 void start_player_turn(Player* player) {
     apply_turn_start_effects(&player->stats);
     player->energia_atual = player->energia_max;
@@ -65,6 +67,7 @@ void start_player_turn(Player* player) {
     draw_cards(player, 5);
 }
 
+// Joga uma carta e aplica seus efeitos
 int play_card(Player* player, int card_index, Enemy* target) {
     Card carta = player->mao.cartas[card_index];
     
@@ -103,7 +106,6 @@ int play_card(Player* player, int card_index, Enemy* target) {
                     player->stats.hp_atual += dano_vampirico; 
                     if (player->stats.hp_atual > player->stats.hp_max) 
                         player->stats.hp_atual = player->stats.hp_max;
-                    printf("ROUBO DE VIDA: Recuperou %d HP!\n", dano_vampirico);
                 }
             }
             break;
@@ -153,6 +155,7 @@ int play_card(Player* player, int card_index, Enemy* target) {
     return 1; 
 }
 
+// Executa o turno dos inimigos (IA)
 void execute_enemy_turn(Player* player, Enemy inimigos[]) {
     for (int i=0; i<2; i++) {
         if (inimigos[i].stats.hp_atual > 0) apply_turn_start_effects(&inimigos[i].stats);

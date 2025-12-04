@@ -19,7 +19,6 @@ typedef enum {
 #define ID_CURA_INSTANT 6
 #define ID_REGEN_RODADAS 7
 #define ID_SONO 8
-#define CUSTO_X -1  // Custo variável
 
 // --- A CARTA ---
 typedef struct {
@@ -87,9 +86,9 @@ typedef struct {
     int acao_ia_atual;     
 } Enemy;
 
-// --- ESTADOS DO JOGO (COM MENU) ---
+// --- ESTADOS DO JOGO ---
 typedef enum {
-    GAME_STATE_MENU,      // <--- NOVO ESTADO
+    GAME_STATE_MENU,      
     GAME_STATE_START,       
     GAME_STATE_NEW_COMBAT,  
     GAME_STATE_PLAYER_TURN, 

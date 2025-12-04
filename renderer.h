@@ -11,7 +11,7 @@ typedef struct {
     ALLEGRO_DISPLAY* display;
     ALLEGRO_FONT* font;
     
-    // --- IMAGENS GERAIS ---
+    // Imagens Gerais
     ALLEGRO_BITMAP* img_player;
     ALLEGRO_BITMAP* img_enemy_weak;   
     ALLEGRO_BITMAP* img_enemy_strong; 
@@ -19,14 +19,13 @@ typedef struct {
     ALLEGRO_BITMAP* img_background; 
     ALLEGRO_BITMAP* img_base; 
 
-    // --- IMAGENS DE CARTAS (FRENTES) ---
+    // Imagens Cartas
     ALLEGRO_BITMAP* img_verso;     
     ALLEGRO_BITMAP* img_ataque;    
     ALLEGRO_BITMAP* img_defesa;    
     ALLEGRO_BITMAP* img_especial;
-    // img_buff e img_debuff removidos aqui!
-
-    // --- ÍCONES ESPECÍFICOS (TODOS) ---
+    
+    // Ícones Específicos
     ALLEGRO_BITMAP* icon_forca;
     ALLEGRO_BITMAP* icon_vulneravel;
     ALLEGRO_BITMAP* icon_veneno;
@@ -42,11 +41,6 @@ typedef struct {
 
 void FillRenderer(Renderer* renderer);
 void ClearRenderer(Renderer* renderer);
-
-void Render(Renderer* renderer,
-            GameState current_state,
-            Player player,
-            Enemy inimigos[],
-            int carta_sel, int inimigo_sel, int selecionando_alvo);
+void Render(Renderer* renderer, GameState current_state, Player player, Enemy inimigos[], int carta_sel, int inimigo_sel, int selecionando_alvo);
 
 #endif

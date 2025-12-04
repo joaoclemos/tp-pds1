@@ -7,6 +7,7 @@ int random_int_in_range(int min, int max) {
     return (rand() % (max - min + 1)) + min;
 }
 
+// Cria uma carta baseada no tipo e custo (SEGUINDO AS REGRAS DO ENUNCIADO)
 Card create_random_card(TipoCarta tipo, int custo) {
     Card nova_carta;
     nova_carta.tipo = tipo;
@@ -22,18 +23,28 @@ Card create_random_card(TipoCarta tipo, int custo) {
 
     if (tipo == ATAQUE || tipo == DEFESA) {
         switch (custo) {
-            case 0: nova_carta.efeito_valor = random_int_in_range(3, 5); break;
-            case 1: nova_carta.efeito_valor = random_int_in_range(6, 9); break;
-            case 2: nova_carta.efeito_valor = random_int_in_range(10, 14); break;
-            case 3: nova_carta.efeito_valor = random_int_in_range(15, 25); break;
+            case 0: nova_carta.efeito_valor = random_int_in_range(1, 5); break;
+            case 1: nova_carta.efeito_valor = random_int_in_range(5, 10); break;
+            case 2: nova_carta.efeito_valor = random_int_in_range(10, 15); break;
+            case 3: nova_carta.efeito_valor = random_int_in_range(15, 30); break;
+            default: nova_carta.efeito_valor = 1; break;
         }
     }
     else if (tipo == BUFF) {
         int sorteio = rand() % 4; 
-        if (sorteio == 0) { nova_carta.efeito_valor = ID_FORCA; nova_carta.magnitude = random_int_in_range(1, 2); } 
-        else if (sorteio == 1) { nova_carta.efeito_valor = ID_DESTREZA; nova_carta.magnitude = random_int_in_range(1, 2); }
-        else if (sorteio == 2) { nova_carta.efeito_valor = ID_CURA_INSTANT; nova_carta.magnitude = (custo == 0 ? 1 : custo) * 5; }
-        else { 
+        if (sorteio == 0) { // Força
+            nova_carta.efeito_valor = ID_FORCA; 
+            nova_carta.magnitude = 1; 
+        } 
+        else if (sorteio == 1) { // Destreza
+            nova_carta.efeito_valor = ID_DESTREZA; 
+            nova_carta.magnitude = 1; 
+        }
+        else if (sorteio == 2) { // Cura Instant
+            nova_carta.efeito_valor = ID_CURA_INSTANT; 
+            nova_carta.magnitude = (custo == 0 ? 1 : custo) * 5; 
+        }
+        else { // Regen
             nova_carta.efeito_valor = ID_REGEN_RODADAS;
             if (rand() % 2 == 0) { nova_carta.custo_energia = CUSTO_X; nova_carta.magnitude = 0; } 
             else { nova_carta.magnitude = (custo == 0 ? 2 : custo + 1); }
@@ -41,10 +52,22 @@ Card create_random_card(TipoCarta tipo, int custo) {
     }
     else if (tipo == DEBUFF) {
         int sorteio = rand() % 4;
-        if (sorteio == 0) { nova_carta.efeito_valor = ID_VENENO; nova_carta.magnitude = random_int_in_range(3, 5); } 
-        else if (sorteio == 1) { nova_carta.efeito_valor = ID_VULNERAVEL; nova_carta.magnitude = 2; } 
-        else if (sorteio == 2) { nova_carta.efeito_valor = ID_FRAQUEZA; nova_carta.magnitude = 2; }
-        else { nova_carta.efeito_valor = ID_SONO; nova_carta.magnitude = 1; if (custo >= 2) nova_carta.magnitude = 2; }
+        if (sorteio == 0) { // Veneno
+            nova_carta.efeito_valor = ID_VENENO; 
+            nova_carta.magnitude = random_int_in_range(3, 5); 
+        } 
+        else if (sorteio == 1) { // Vulnerável
+            nova_carta.efeito_valor = ID_VULNERAVEL; 
+            nova_carta.magnitude = 1; // Dura 1 rodada
+        } 
+        else if (sorteio == 2) { // Fraqueza
+            nova_carta.efeito_valor = ID_FRAQUEZA; 
+            nova_carta.magnitude = 1; // Dura 1 rodada
+        }
+        else { // Sono
+            nova_carta.efeito_valor = ID_SONO; 
+            nova_carta.magnitude = 1; 
+        }
     }
 
     return nova_carta;
@@ -59,32 +82,47 @@ void shuffle_pilha(PilhaCartas *pilha) {
     }
 }
 
+// --- MODIFICADO: Inclui Golpe Vampírico ---
 PilhaCartas create_initial_deck() {
     PilhaCartas baralho;
     baralho.num_cartas = 0;
     int i = 0;
 
-    for(int k=0; k<7; k++) baralho.cartas[i++] = create_random_card(ATAQUE, random_int_in_range(0, 2));
-    for(int k=0; k<6; k++) baralho.cartas[i++] = create_random_card(DEFESA, random_int_in_range(0, 2));
+    // --- 7 ATAQUES COMUNS ---
+    // (Reduzido de 8 para 7 para dar espaço ao Vampiro)
+    baralho.cartas[i++] = create_random_card(ATAQUE, 0);
+    baralho.cartas[i++] = create_random_card(ATAQUE, 1);
+    baralho.cartas[i++] = create_random_card(ATAQUE, 2);
+    baralho.cartas[i++] = create_random_card(ATAQUE, 3);
+    for(int k=0; k<3; k++) baralho.cartas[i++] = create_random_card(ATAQUE, random_int_in_range(0, 2));
+    
+    // --- 6 DEFESAS ---
+    baralho.cartas[i++] = create_random_card(DEFESA, 0);
+    baralho.cartas[i++] = create_random_card(DEFESA, 1);
+    baralho.cartas[i++] = create_random_card(DEFESA, 2);
+    baralho.cartas[i++] = create_random_card(DEFESA, 3);
+    for(int k=0; k<2; k++) baralho.cartas[i++] = create_random_card(DEFESA, random_int_in_range(0, 2));
+
+    // --- 2 ESPECIAIS ---
     baralho.cartas[i++] = create_random_card(ESPECIAL, 0);
     baralho.cartas[i++] = create_random_card(ESPECIAL, 0);
 
-    // 2 BUFFS
-    baralho.cartas[i++] = create_random_card(BUFF, random_int_in_range(1, 2));
-    baralho.cartas[i++] = create_random_card(BUFF, random_int_in_range(1, 2));
+    // --- 4 BUFFS/DEBUFFS ---
+    baralho.cartas[i++] = create_random_card(BUFF, 1);
+    baralho.cartas[i++] = create_random_card(BUFF, 1);
+    baralho.cartas[i++] = create_random_card(DEBUFF, 1);
+    baralho.cartas[i++] = create_random_card(DEBUFF, 1);
 
-    // 2 DEBUFFS
-    baralho.cartas[i++] = create_random_card(DEBUFF, random_int_in_range(1, 2));
-    baralho.cartas[i++] = create_random_card(DEBUFF, random_int_in_range(1, 2));
-
-    // Golpe Vampírico (Ataque fixo)
+    // --- 1 GOLPE VAMPÍRICO (Ataque Especial) ---
+    // Conta como o 8º ataque, mas com efeito extra de roubo de vida
     baralho.cartas[i].tipo = ATAQUE;
     baralho.cartas[i].custo_energia = 2;
     baralho.cartas[i].efeito_valor = 8;
     baralho.cartas[i].magnitude = 0;
-    baralho.cartas[i].is_vampiric = 1;
+    baralho.cartas[i].is_vampiric = 1; // Ativa o efeito no logic.c
     i++;
 
+    // Total = 20 Cartas
     baralho.num_cartas = 20;
     shuffle_pilha(&baralho);
     return baralho;
@@ -135,11 +173,12 @@ Enemy create_enemy() {
     } else {
         inimigo.tipo = FRACO;
         inimigo.stats.hp_max = random_int_in_range(15, 35);
-        inimigo.num_acoes_ia = random_int_in_range(1, 2); 
+        inimigo.num_acoes_ia = 2; 
     }
 
     for (int i = 0; i < inimigo.num_acoes_ia; i++) {
         TipoCarta tipo = (rand() % 2 == 0) ? ATAQUE : DEFESA;
+        // Inimigos usam custo 0, 1 ou 2
         Card acao = create_random_card(tipo, random_int_in_range(0, 2));
         inimigo.ia_ciclo[i].tipo_acao = acao.tipo;
         inimigo.ia_ciclo[i].valor_efeito = acao.efeito_valor;
@@ -172,15 +211,9 @@ Enemy create_boss() {
     boss.stats.dormindo = 0;
 
     boss.num_acoes_ia = 3;
-    
-    boss.ia_ciclo[0].tipo_acao = ATAQUE;
-    boss.ia_ciclo[0].valor_efeito = 20; 
-    
-    boss.ia_ciclo[1].tipo_acao = DEFESA;
-    boss.ia_ciclo[1].valor_efeito = 30; 
-    
-    boss.ia_ciclo[2].tipo_acao = ATAQUE;
-    boss.ia_ciclo[2].valor_efeito = 25; 
+    boss.ia_ciclo[0].tipo_acao = ATAQUE; boss.ia_ciclo[0].valor_efeito = 20; 
+    boss.ia_ciclo[1].tipo_acao = DEFESA; boss.ia_ciclo[1].valor_efeito = 30; 
+    boss.ia_ciclo[2].tipo_acao = ATAQUE; boss.ia_ciclo[2].valor_efeito = 25; 
     
     boss.acao_ia_atual = 0;
     return boss;
